@@ -154,7 +154,7 @@ main.elf: $(OBJECTS)	# usbdrv dependency only needed because we copy it
 main.hex: main.elf
 	rm -f main.hex main.eep.hex
 	avr-objcopy -j .text -j .data -O ihex main.elf main.hex
-	avr-size main.hex
+	avr-size -C main.elf --mcu $(DEVICE)
 
 # debugging targets:
 
@@ -163,3 +163,6 @@ disasm:	main.elf
 
 cpp:
 	$(COMPILE) -E main.c
+
+info:
+	$(AVRDUDE) -v

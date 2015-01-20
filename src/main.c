@@ -5,7 +5,7 @@
 #include <avr/wdt.h>
 #include <avr/sleep.h>
 #include <avr/eeprom.h>
-#include "usiTwiSlave.h"
+//#include "usiTwiSlave.h"
 
 #define USI_SCK PA4
 #define USI_MISO PA5
@@ -219,6 +219,7 @@ uint16_t getLight() {
 
 // ----------------- sensor mode loop hack ---------------------
 
+#if 0
 void loopSensorMode() {
     PRR &= ~_BV(PRADC);  //enable ADC in power reduction
     ADCSRA = _BV(ADEN) | _BV(ADPS2);
@@ -260,6 +261,7 @@ void loopSensorMode() {
 		}
 	}
 }
+#endif
 
 // --------------- chirp FSM states and utilities-----------------
 #define STATE_INITIAL 0
@@ -318,12 +320,19 @@ int main (void) {
     	address = 0x20;
     }
 
-    usiTwiSlaveInit(address);
+    /* usiTwiSlaveInit(address); */
 
     CLKPR = _BV(CLKPCE);
     CLKPR = _BV(CLKPS1); //clock speed = clk/4 = 2Mhz
 
     sei();
+    uart_setup();
+
+    while(1)
+    {
+        uart_puts("Hello world");
+        _delay_ms(1000);
+    }
     
     chirp(2);
     ledOn();
@@ -334,9 +343,11 @@ int main (void) {
     getLight();
     chirp(2);
 
+#if 0
     if(usiTwiDataInReceiveBuffer()){
 		loopSensorMode();
 	}
+#endif
 
 	uint16_t referenceCapacitance = getCapacitance();
 

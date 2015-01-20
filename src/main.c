@@ -5,6 +5,9 @@
 #include <avr/wdt.h>
 #include <avr/sleep.h>
 #include <avr/eeprom.h>
+#include "uart.h"
+#include <stdlib.h>
+
 //#include "usiTwiSlave.h"
 
 #define USI_SCK PA4
@@ -313,7 +316,11 @@ void inline chirpIfLight() {
 //-----------------------------------------------------------------
 
 int main (void) {
-	setupGPIO();
+
+    char ref_cap_str[10];
+    char cur_cap_str[10];
+
+    setupGPIO();
 
 	uint8_t address = eeprom_read_byte((uint8_t*)0x01);
     if(0 == address || 255 == address) {
@@ -328,12 +335,6 @@ int main (void) {
     sei();
     uart_setup();
 
-    while(1)
-    {
-        uart_puts("Hello world");
-        _delay_ms(1000);
-    }
-    
     chirp(2);
     ledOn();
     _delay_ms(10);
@@ -366,6 +367,8 @@ int main (void) {
     uint16_t currCapacitance = 0;
     uint16_t lastCapacitance = 0;
 
+    itoa(referenceCapacitance, ref_cap_str, 10);
+
     while(1) {
         if(wakeUpCount < maxSleepTimes) {
             sleep();
@@ -377,6 +380,13 @@ int main (void) {
             lastCapacitance = currCapacitance;
             currCapacitance = getCapacitance();
             capacitanceDiff = referenceCapacitance - currCapacitance;
+
+            itoa(referenceCapacitance, cur_cap_str, 10);
+            uart_puts("RefCap: ");
+            uart_puts(ref_cap_str);
+            uart_puts("   CurCap: ");
+            uart_puts(cur_cap_str);
+            uart_puts("\n");
             
             if (!playedHappy && ((int16_t)lastCapacitance - (int16_t)currCapacitance) < -5 && lastCapacitance !=0) {
                 chirp(9);

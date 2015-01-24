@@ -381,12 +381,12 @@ int main (void) {
             currCapacitance = getCapacitance();
             capacitanceDiff = referenceCapacitance - currCapacitance;
 
-            itoa(referenceCapacitance, cur_cap_str, 10);
+            itoa(currCapacitance, cur_cap_str, 10);
             uart_puts("RefCap: ");
             uart_puts(ref_cap_str);
             uart_puts("   CurCap: ");
             uart_puts(cur_cap_str);
-            uart_puts("\n");
+            uart_puts("\r\n");
             
             if (!playedHappy && ((int16_t)lastCapacitance - (int16_t)currCapacitance) < -5 && lastCapacitance !=0) {
                 chirp(9);

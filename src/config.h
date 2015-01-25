@@ -12,6 +12,7 @@
 #define I2C_GET_VERSION         0x07
 #define I2C_GET_DRY_CAPACITANCE 0x08
 #define I2C_SET_DRY_CAPACITANCE 0x09
+#define I2C_CHIRP               0x0A
 
 /* eeprom addresses */
 #define I2C_ADDRESS_EEPROM  0x01

@@ -288,7 +288,11 @@ void loopSensorMode() {
                             usiTwiTransmitByte(light & 0x00FF);
                             break;
 
-			default:
+                        case I2C_CHIRP:
+                            chirp(3);
+                            break;
+
+                        default:
                             break;
 //				while(usiTwiDataInReceiveBuffer()) {
 //					usiTwiReceiveByte();//clean up the receive buffer

@@ -378,6 +378,12 @@ int main (void) {
 
     sei();
 //    uart_setup();
+    _delay_ms(500);
+#if 1
+    if(usiTwiDataInReceiveBuffer()){
+		loopSensorMode();
+    }
+#endif
 
     chirp(2);
     ledOn();
@@ -388,11 +394,6 @@ int main (void) {
     getLight();
     chirp(2);
 
-#if 1
-//    if(usiTwiDataInReceiveBuffer()){
-		loopSensorMode();
-//	}
-#endif
 
     uint16_t referenceCapacitance=0;
 

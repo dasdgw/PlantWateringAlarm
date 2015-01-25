@@ -7,7 +7,7 @@
 #include <avr/eeprom.h>
 //#include "uart.h"
 
-#include "i2c.h"
+#include "config.h"
 #include <stdlib.h>
 
 #include "usiTwiSlave.h"
@@ -236,10 +236,13 @@ void loopSensorMode() {
 	uint16_t currCapacitance = 0;
 	uint16_t light = 0;
         uint8_t newAddress = 0;
+        uint16_t refCap = 0;
+        uint8_t usiRx;
+        uint8_t usiTx;
 
 	while(1) {
 	    if(usiTwiDataInReceiveBuffer()) {
-			uint8_t usiRx = usiTwiReceiveByte();
+			usiRx = usiTwiReceiveByte();
                         switch (usiRx) {
 
                         case I2C_GET_CAPACITANCE:
@@ -250,15 +253,29 @@ void loopSensorMode() {
                             ledOff();
                             break;
 
+                        case I2C_SET_DRY_CAPACITANCE:
+                            usiRx  = usiTwiReceiveByte();
+                            eeprom_write_byte((uint8_t*)DRY_CAP_HIGH_EEPROM, usiRx);
+                            usiRx  = usiTwiReceiveByte();
+                            eeprom_write_byte((uint8_t*)DRY_CAP_LOW_EEPROM, usiRx);
+                            break;
+
+                        case I2C_GET_DRY_CAPACITANCE:
+                            usiTx = eeprom_read_byte((uint8_t*)DRY_CAP_HIGH_EEPROM);
+                            usiTwiTransmitByte(usiTx);
+                            usiTx = eeprom_read_byte((uint8_t*)DRY_CAP_LOW_EEPROM);
+                            usiTwiTransmitByte(usiTx);
+                            break;
+
 			case I2C_SET_ADDRESS:
                             newAddress  = usiTwiReceiveByte();
                             if(newAddress > 0 && newAddress < 255) {
-                                eeprom_write_byte((uint8_t*)0x01, newAddress);
+                                eeprom_write_byte((uint8_t*)I2C_ADDRESS_EEPROM, newAddress);
                             }
                             break;
 
 			case I2C_GET_ADDRESS:
-                            newAddress = eeprom_read_byte((uint8_t*) 0x01);
+                            newAddress = eeprom_read_byte((uint8_t*) I2C_ADDRESS_EEPROM);
                             usiTwiTransmitByte(newAddress);
                             break;
 

@@ -394,8 +394,9 @@ int main (void) {
 //	}
 #endif
 
-	uint16_t referenceCapacitance = getCapacitance();
+    uint16_t referenceCapacitance=0;
 
+    /* ! this disables I2C */
     USICR = 0;
 
     setupPowerSaving();
@@ -410,6 +411,9 @@ int main (void) {
     uint8_t maxSleepTimes = 0;
     uint16_t currCapacitance = 0;
     uint16_t lastCapacitance = 0;
+
+    referenceCapacitance = ( eeprom_read_byte((uint8_t*)DRY_CAP_HIGH_EEPROM) << 8 );
+    referenceCapacitance |= eeprom_read_byte((uint8_t*)DRY_CAP_LOW_EEPROM);
 
     itoa(referenceCapacitance, ref_cap_str, 10);
 

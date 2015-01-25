@@ -364,7 +364,7 @@ int main (void) {
     	address = 0x20;
     }
 
-    /* usiTwiSlaveInit(address); */
+    usiTwiSlaveInit(address);
 
     CLKPR = _BV(CLKPCE);
     CLKPR = _BV(CLKPS1); //clock speed = clk/4 = 2Mhz

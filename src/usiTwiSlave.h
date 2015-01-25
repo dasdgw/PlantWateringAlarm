@@ -59,6 +59,7 @@ uint8_t usiTwiReceiveByte( void );
 bool    usiTwiDataInReceiveBuffer( void );
 void    usiTwiOnStart( void (*function) () );
 void    usiTwiOnStop( void (*function) () );
+void flushTwiBuffers( void );
 
 
 

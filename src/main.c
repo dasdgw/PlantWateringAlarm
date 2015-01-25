@@ -292,13 +292,20 @@ void loopSensorMode() {
                             chirp(3);
                             break;
 
-                        default:
+                        case I2C_FLUSH_I2C_BUFFERS:
+                            flushTwiBuffers();
                             break;
-//				while(usiTwiDataInReceiveBuffer()) {
-//					usiTwiReceiveByte();//clean up the receive buffer
-//				}
+
+                        default:
+                            /* clean up the receive buffer */
+                            /*
+                              while(usiTwiDataInReceiveBuffer()) {
+                              usiTwiReceiveByte();
+                              }
+                            */
+                            break;
 			}
-		}
+            }
 	}
 }
 #endif

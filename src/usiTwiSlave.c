@@ -292,7 +292,7 @@ static void (*usiTwiOnStopFunction) ();
 
 // flushes the TWI buffers
 
-static
+//static
 void
 flushTwiBuffers(
   void

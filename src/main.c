@@ -5,10 +5,12 @@
 #include <avr/wdt.h>
 #include <avr/sleep.h>
 #include <avr/eeprom.h>
-#include "uart.h"
+//#include "uart.h"
+
+#include "i2c.h"
 #include <stdlib.h>
 
-//#include "usiTwiSlave.h"
+#include "usiTwiSlave.h"
 
 #define USI_SCK PA4
 #define USI_MISO PA5
@@ -222,7 +224,7 @@ uint16_t getLight() {
 
 // ----------------- sensor mode loop hack ---------------------
 
-#if 0
+#if 1
 void loopSensorMode() {
     PRR &= ~_BV(PRADC);  //enable ADC in power reduction
     ADCSRA = _BV(ADEN) | _BV(ADPS2);
@@ -237,23 +239,23 @@ void loopSensorMode() {
 	while(1) {
 	    if(usiTwiDataInReceiveBuffer()) {
 			uint8_t usiRx = usiTwiReceiveByte();
-			if(0 == usiRx) {
+			if(I2C_GET_CAPACITANCE == usiRx) {
 				ledOn();
 				currCapacitance = getCapacitance();
 			    usiTwiTransmitByte(currCapacitance >> 8);
 				usiTwiTransmitByte(currCapacitance &0x00FF);
 				ledOff();
-			} else if(0x01 == usiRx) {
+			} else if(I2C_SET_ADDRESS == usiRx) {
 				uint8_t newAddress = usiTwiReceiveByte();
 				if(newAddress > 0 && newAddress < 255) {
 					eeprom_write_byte((uint8_t*)0x01, newAddress);
 				}
-			} else if(0x02 == usiRx) {
+			} else if(I2C_GET_ADDRESS == usiRx) {
 				uint8_t newAddress = eeprom_read_byte((uint8_t*) 0x01);
 				usiTwiTransmitByte(newAddress);
-			} else if(0x03 == usiRx) {
+			} else if(I2C_MEASURE_LIGHT == usiRx) {
 				light = getLight();
-			} else if(0x04 == usiRx) {
+			} else if(I2C_GET_LIGHT == usiRx) {
 				usiTwiTransmitByte(light >> 8);
 				usiTwiTransmitByte(light & 0x00FF);
 			} else {
@@ -333,7 +335,7 @@ int main (void) {
     CLKPR = _BV(CLKPS1); //clock speed = clk/4 = 2Mhz
 
     sei();
-    uart_setup();
+//    uart_setup();
 
     chirp(2);
     ledOn();
@@ -344,10 +346,10 @@ int main (void) {
     getLight();
     chirp(2);
 
-#if 0
-    if(usiTwiDataInReceiveBuffer()){
+#if 1
+//    if(usiTwiDataInReceiveBuffer()){
 		loopSensorMode();
-	}
+//	}
 #endif
 
 	uint16_t referenceCapacitance = getCapacitance();
@@ -382,11 +384,13 @@ int main (void) {
             capacitanceDiff = referenceCapacitance - currCapacitance;
 
             itoa(currCapacitance, cur_cap_str, 10);
+            /*
             uart_puts("RefCap: ");
             uart_puts(ref_cap_str);
             uart_puts("   CurCap: ");
             uart_puts(cur_cap_str);
             uart_puts("\r\n");
+            */
             
             if (!playedHappy && ((int16_t)lastCapacitance - (int16_t)currCapacitance) < -5 && lastCapacitance !=0) {
                 chirp(9);

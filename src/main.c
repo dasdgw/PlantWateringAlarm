@@ -235,30 +235,44 @@ void loopSensorMode() {
 	_delay_ms(500);
 	uint16_t currCapacitance = 0;
 	uint16_t light = 0;
+        uint8_t newAddress = 0;
 
 	while(1) {
 	    if(usiTwiDataInReceiveBuffer()) {
 			uint8_t usiRx = usiTwiReceiveByte();
-			if(I2C_GET_CAPACITANCE == usiRx) {
-				ledOn();
-				currCapacitance = getCapacitance();
+                        switch (usiRx) {
+
+                        case I2C_GET_CAPACITANCE:
+                            ledOn();
+                            currCapacitance = getCapacitance();
 			    usiTwiTransmitByte(currCapacitance >> 8);
-				usiTwiTransmitByte(currCapacitance &0x00FF);
-				ledOff();
-			} else if(I2C_SET_ADDRESS == usiRx) {
-				uint8_t newAddress = usiTwiReceiveByte();
-				if(newAddress > 0 && newAddress < 255) {
-					eeprom_write_byte((uint8_t*)0x01, newAddress);
-				}
-			} else if(I2C_GET_ADDRESS == usiRx) {
-				uint8_t newAddress = eeprom_read_byte((uint8_t*) 0x01);
-				usiTwiTransmitByte(newAddress);
-			} else if(I2C_MEASURE_LIGHT == usiRx) {
-				light = getLight();
-			} else if(I2C_GET_LIGHT == usiRx) {
-				usiTwiTransmitByte(light >> 8);
-				usiTwiTransmitByte(light & 0x00FF);
-			} else {
+                            usiTwiTransmitByte(currCapacitance &0x00FF);
+                            ledOff();
+                            break;
+
+			case I2C_SET_ADDRESS:
+                            newAddress  = usiTwiReceiveByte();
+                            if(newAddress > 0 && newAddress < 255) {
+                                eeprom_write_byte((uint8_t*)0x01, newAddress);
+                            }
+                            break;
+
+			case I2C_GET_ADDRESS:
+                            newAddress = eeprom_read_byte((uint8_t*) 0x01);
+                            usiTwiTransmitByte(newAddress);
+                            break;
+
+			case I2C_MEASURE_LIGHT:
+                            light = getLight();
+                            break;
+
+			case I2C_GET_LIGHT:
+                            usiTwiTransmitByte(light >> 8);
+                            usiTwiTransmitByte(light & 0x00FF);
+                            break;
+
+			default:
+                            break;
 //				while(usiTwiDataInReceiveBuffer()) {
 //					usiTwiReceiveByte();//clean up the receive buffer
 //				}

@@ -159,7 +159,8 @@ main.hex: main.elf
 # debugging targets:
 
 disasm:	main.elf
-	avr-objdump -d main.elf
+#	avr-objdump -d main.elf
+	avr-objdump -d -S main.elf > disasm.txt
 
 cpp:
 	$(COMPILE) -E main.c

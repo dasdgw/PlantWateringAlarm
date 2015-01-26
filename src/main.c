@@ -14,7 +14,7 @@
 #define USI_MISO PA5
 #define USI_CS PA6
 #define BUZZER PA7
-#define BUTTON PB2
+#define BUTTON PB2//The button is connected on the reset line not on PB2
 #define LED_K PB0 
 #define LED_A PB1
 

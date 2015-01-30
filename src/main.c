@@ -233,77 +233,77 @@ void loopSensorMode() {
     uint8_t usiRx;
     uint8_t usiTx;
 
-        ledOn();
-        while(1) {
-	    if(usiTwiDataInReceiveBuffer()) {
+    ledOn();
+    while(1) {
+        if(usiTwiDataInReceiveBuffer()) {
 
-			usiRx = usiTwiReceiveByte();
-                        switch (usiRx) {
+            usiRx = usiTwiReceiveByte();
+            switch (usiRx) {
 
-                        case I2C_MEASURE_CAPACITANCE:
-                            currCapacitance = getCapacitance();
-                            break;
+            case I2C_MEASURE_CAPACITANCE:
+                currCapacitance = getCapacitance();
+                break;
 
-                        case I2C_GET_CAPACITANCE:
-			    usiTwiTransmitByte(currCapacitance >> 8);
-                            usiTwiTransmitByte(currCapacitance &0x00FF);
-                            break;
+            case I2C_GET_CAPACITANCE:
+                usiTwiTransmitByte(currCapacitance >> 8);
+                usiTwiTransmitByte(currCapacitance &0x00FF);
+                break;
 
-                        case I2C_SET_DRY_CAPACITANCE:
-                            usiRx  = usiTwiReceiveByte();
-                            eeprom_write_byte((uint8_t*)DRY_CAP_HIGH_EEPROM, usiRx);
-                            usiRx  = usiTwiReceiveByte();
-                            eeprom_write_byte((uint8_t*)DRY_CAP_LOW_EEPROM, usiRx);
-                            break;
+            case I2C_SET_DRY_CAPACITANCE:
+                usiRx  = usiTwiReceiveByte();
+                eeprom_write_byte((uint8_t*)DRY_CAP_HIGH_EEPROM, usiRx);
+                usiRx  = usiTwiReceiveByte();
+                eeprom_write_byte((uint8_t*)DRY_CAP_LOW_EEPROM, usiRx);
+                break;
 
-                        case I2C_GET_DRY_CAPACITANCE:
-                            usiTx = eeprom_read_byte((uint8_t*)DRY_CAP_HIGH_EEPROM);
-                            usiTwiTransmitByte(usiTx);
-                            usiTx = eeprom_read_byte((uint8_t*)DRY_CAP_LOW_EEPROM);
-                            usiTwiTransmitByte(usiTx);
-                            break;
+            case I2C_GET_DRY_CAPACITANCE:
+                usiTx = eeprom_read_byte((uint8_t*)DRY_CAP_HIGH_EEPROM);
+                usiTwiTransmitByte(usiTx);
+                usiTx = eeprom_read_byte((uint8_t*)DRY_CAP_LOW_EEPROM);
+                usiTwiTransmitByte(usiTx);
+                break;
 
-			case I2C_SET_ADDRESS:
-                            newAddress  = usiTwiReceiveByte();
-                            if(newAddress > 0 && newAddress < 255) {
-                                eeprom_write_byte((uint8_t*)I2C_ADDRESS_EEPROM, newAddress);
-                            }
-                            break;
+            case I2C_SET_ADDRESS:
+                newAddress  = usiTwiReceiveByte();
+                if(newAddress > 0 && newAddress < 255) {
+                    eeprom_write_byte((uint8_t*)I2C_ADDRESS_EEPROM, newAddress);
+                }
+                break;
 
-			case I2C_GET_ADDRESS:
-                            newAddress = eeprom_read_byte((uint8_t*) I2C_ADDRESS_EEPROM);
-                            usiTwiTransmitByte(newAddress);
-                            break;
+            case I2C_GET_ADDRESS:
+                newAddress = eeprom_read_byte((uint8_t*) I2C_ADDRESS_EEPROM);
+                usiTwiTransmitByte(newAddress);
+                break;
 
-			case I2C_MEASURE_LIGHT:
-                            light = getLight();
-                            break;
+            case I2C_MEASURE_LIGHT:
+                light = getLight();
+                break;
 
-			case I2C_GET_LIGHT:
-                            usiTwiTransmitByte(light >> 8);
-                            usiTwiTransmitByte(light & 0x00FF);
-                            break;
+            case I2C_GET_LIGHT:
+                usiTwiTransmitByte(light >> 8);
+                usiTwiTransmitByte(light & 0x00FF);
+                break;
 
-                        case I2C_CHIRP:
-                            chirp(3);
-                            break;
+            case I2C_CHIRP:
+                chirp(3);
+                break;
 
-                        case I2C_FLUSH_I2C_BUFFERS:
-                            flushTwiBuffers();
-                            break;
+            case I2C_FLUSH_I2C_BUFFERS:
+                flushTwiBuffers();
+                break;
 
-                        default:
-                            /* clean up the receive buffer */
-                            /*
-                              while(usiTwiDataInReceiveBuffer()) {
-                              usiTwiReceiveByte();
-                              }
-                            */
-                            break;
-			}
+            default:
+                /* clean up the receive buffer */
+                /*
+                  while(usiTwiDataInReceiveBuffer()) {
+                  usiTwiReceiveByte();
+                  }
+                */
+                break;
             }
-	}
-        ledOff();
+        }
+    }
+    ledOff();
 }
 #endif
 

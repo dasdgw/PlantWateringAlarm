@@ -226,12 +226,12 @@ uint16_t getLight() {
 
 #if 1
 void loopSensorMode() {
-	uint16_t currCapacitance = 0;
-	uint16_t light = 0;
-        uint8_t newAddress = 0;
-        uint16_t refCap = 0;
-        uint8_t usiRx;
-        uint8_t usiTx;
+    static uint16_t currCapacitance = 0;
+    uint16_t light = 0;
+    uint8_t newAddress = 0;
+    uint16_t refCap = 0;
+    uint8_t usiRx;
+    uint8_t usiTx;
 
         ledOn();
         while(1) {
@@ -240,8 +240,11 @@ void loopSensorMode() {
 			usiRx = usiTwiReceiveByte();
                         switch (usiRx) {
 
-                        case I2C_GET_CAPACITANCE:
+                        case I2C_MEASURE_CAPACITANCE:
                             currCapacitance = getCapacitance();
+                            break;
+
+                        case I2C_GET_CAPACITANCE:
 			    usiTwiTransmitByte(currCapacitance >> 8);
                             usiTwiTransmitByte(currCapacitance &0x00FF);
                             break;

@@ -226,13 +226,6 @@ uint16_t getLight() {
 
 #if 1
 void loopSensorMode() {
-    PRR &= ~_BV(PRADC);  //enable ADC in power reduction
-    ADCSRA = _BV(ADEN) | _BV(ADPS2);
-    ADMUX |= _BV(MUX0); //select ADC1 as input
-    PRR &= ~_BV(PRTIM0);
-
-	startExcitationSignal();
-	_delay_ms(500);
 	uint16_t currCapacitance = 0;
 	uint16_t light = 0;
         uint8_t newAddress = 0;

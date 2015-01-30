@@ -240,17 +240,17 @@ void loopSensorMode() {
         uint8_t usiRx;
         uint8_t usiTx;
 
-	while(1) {
+        ledOn();
+        while(1) {
 	    if(usiTwiDataInReceiveBuffer()) {
+
 			usiRx = usiTwiReceiveByte();
                         switch (usiRx) {
 
                         case I2C_GET_CAPACITANCE:
-                            ledOn();
                             currCapacitance = getCapacitance();
 			    usiTwiTransmitByte(currCapacitance >> 8);
                             usiTwiTransmitByte(currCapacitance &0x00FF);
-                            ledOff();
                             break;
 
                         case I2C_SET_DRY_CAPACITANCE:
@@ -307,6 +307,7 @@ void loopSensorMode() {
 			}
             }
 	}
+        ledOff();
 }
 #endif
 

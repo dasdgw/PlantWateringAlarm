@@ -24,7 +24,7 @@ uint8_t sleep_disabled = 0;
 
 //------------ peripherals ----------------
 
-void inline initBuzzer() {
+static inline void initBuzzer() {
     TCCR0A = 0; //reset timer1 configuration
     TCCR0B = 0;
 
@@ -33,7 +33,7 @@ void inline initBuzzer() {
     TCCR0B |= _BV(CS00);    //start timer
 }
 
-void inline beep() {
+static inline void beep() {
     initBuzzer();
     OCR0B = 48;
     _delay_ms(42);
@@ -41,13 +41,13 @@ void inline beep() {
     PORTA &= ~_BV(BUZZER);
 }
 
-void inline ledOn() {
+static inline void ledOn() {
   DDRB |= _BV(LED_A) | _BV(LED_K); //forward bias the LED
   PORTB &= ~_BV(LED_K);            //flash it to discharge the PN junction capacitance
   PORTB |= _BV(LED_A);  
 }
 
-void inline ledOff() {
+static inline void ledOff() {
   DDRB &= ~(_BV(LED_A) | _BV(LED_K)); //make pins inputs
   PORTB &= ~(_BV(LED_A) | _BV(LED_K));//disable pullups
 }
@@ -63,7 +63,7 @@ void  chirp(uint8_t times) {
 
 //------------------- initialization/setup-------------------
 
-void inline setupGPIO() {
+static inline void setupGPIO() {
     PORTA |= _BV(PA0);  //nothing
     PORTA &= ~_BV(PA0);                     
     PORTA |= _BV(PA2);  //nothing
@@ -81,7 +81,7 @@ void inline setupGPIO() {
     PORTB &= ~_BV(PB2);
 }
 
-void inline setupPowerSaving() {
+static inline void setupPowerSaving() {
     DIDR0 |= _BV(ADC1D);   //disable digital input buffer on AIN0 and AIN1
     PRR |= _BV(PRTIM1);                 //disable timer1
     PRR |= _BV(PRTIM0);                 //disable timer0
@@ -89,7 +89,7 @@ void inline setupPowerSaving() {
     PRR |= _BV(PRADC);
     PRR |= _BV(PRUSI);
 }
-void inline restorePowerSaving() {
+static inline void restorePowerSaving() {
     // DIDR0 |= _BV(ADC1D);
     PRR &= ~_BV(PRTIM1);
     PRR &= ~_BV(PRTIM0);
@@ -100,14 +100,14 @@ void inline restorePowerSaving() {
 
 //--------------- sleep / wakeup routines --------------
 
-void inline initWatchdog() {
+static inline void initWatchdog() {
     WDTCSR |= _BV(WDCE);
     WDTCSR &= ~_BV(WDE); //interrupt on watchdog overflow
     WDTCSR |= _BV(WDIE); //enable interrupt
     WDTCSR |= _BV(WDP1) | _BV(WDP2); //every 1 sec
 }
 
-void inline disableWatchdog() {
+static inline void disableWatchdog() {
     WDTCSR &= ~_BV(WDCE);
     WDTCSR &= ~_BV(WDIE); //disable interrupt
 }
@@ -116,7 +116,7 @@ ISR(WATCHDOG_vect ) {
    // nothing, just wake up
 }
 
-void inline sleep() {
+static inline void sleep() {
     set_sleep_mode(SLEEP_MODE_PWR_DOWN);
     //set_sleep_mode(SLEEP_MODE_IDLE);
     sleep_enable();
@@ -127,7 +127,7 @@ void inline sleep() {
     wdt_disable();
 }
 
-void inline sleepWhileADC() {
+static inline void sleepWhileADC() {
     set_sleep_mode(SLEEP_MODE_ADC);
     sleep_mode();
 }
@@ -359,7 +359,7 @@ uint32_t secondsAfterWatering = 0;
 /**
  * Sets wake up interval to 8s
  **/
-void inline wakeUpInterval8s() {
+static inline void wakeUpInterval8s() {
 
     initWatchdog();
 
@@ -372,7 +372,7 @@ void inline wakeUpInterval8s() {
 /**
  * Sets wake up interval to 1s
  **/
-void inline wakeUpInterval1s() {
+static inline void wakeUpInterval1s() {
 
     initWatchdog();
     WDTCSR &= ~_BV(WDP3);
@@ -382,7 +382,7 @@ void inline wakeUpInterval1s() {
 
 }
 
-void inline chirpIfLight() {
+static inline void chirpIfLight() {
     getLight();
     if(lightCounter < 65530) {
         chirp(3);

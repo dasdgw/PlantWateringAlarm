@@ -52,7 +52,7 @@ static inline void ledOff() {
   PORTB &= ~(_BV(LED_A) | _BV(LED_K));//disable pullups
 }
 
-void  chirp(uint8_t times) {
+static void chirp(uint8_t times) {
     PRR &= ~_BV(PRTIM0);
     while (times-- > 0) {
         beep();
@@ -138,19 +138,19 @@ ISR(ADC_vect) {
 
 // ------------------ capacitance measurement ------------------
 
-void startExcitationSignal() {
+static void startExcitationSignal() {
 	OCR0A = 0;
 	TCCR0A = _BV(COM0A0) |  //Toggle OC0A on Compare Match
 			_BV(WGM01);
 	TCCR0B = _BV(CS00);
 }
 
-void stopExcitationSignal() {
+static void stopExcitationSignal() {
 	TCCR0B = 0;
 	TCCR0A = 0;
 }
 
-uint16_t getADC1() {
+static uint16_t getADC1() {
     ADCSRA |= _BV(ADPS2); //adc clock speed = sysclk/16
     ADCSRA |= _BV(ADIE);
     ADMUX |= _BV(MUX0); //select ADC1 as input
@@ -165,7 +165,7 @@ uint16_t getADC1() {
     return 1023 - result;
 }
 
-uint16_t getCapacitance() {
+static uint16_t getCapacitance() {
     PRR &= ~_BV(PRADC);  //enable ADC in power reduction
     ADCSRA |= _BV(ADEN);
     
@@ -204,7 +204,7 @@ ISR(TIM1_OVF_vect) {
     lightCycleOver = 1;
 }
 
-uint16_t getLight() {
+static uint16_t getLight() {
     PRR &= ~_BV(PRTIM1);
     TIMSK1 |= _BV(TOIE1); 				//enable timer overflow interrupt
     
@@ -242,7 +242,7 @@ uint16_t getLight() {
 // ----------------- sensor mode loop hack ---------------------
 
 #if 1
-void loopSensorMode() {
+static void loopSensorMode() {
     static uint16_t currCapacitance = 0;
     static uint16_t light = 0;
     uint8_t newAddress = 0;

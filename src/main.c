@@ -20,6 +20,8 @@
 #define LED_K PB0 
 #define LED_A PB1
 
+uint8_t sleep_disabled = 0;
+
 //------------ peripherals ----------------
 
 void inline initBuzzer() {
@@ -87,6 +89,14 @@ void inline setupPowerSaving() {
     PRR |= _BV(PRADC);
     PRR |= _BV(PRUSI);
 }
+void inline restorePowerSaving() {
+    // DIDR0 |= _BV(ADC1D);
+    PRR &= ~_BV(PRTIM1);
+    PRR &= ~_BV(PRTIM0);
+    // ADCSRA &=~ _BV(ADEN);
+    PRR &= ~_BV(PRADC);
+    PRR &= ~_BV(PRUSI);
+}
 
 //--------------- sleep / wakeup routines --------------
 
@@ -97,17 +107,24 @@ void inline initWatchdog() {
     WDTCSR |= _BV(WDP1) | _BV(WDP2); //every 1 sec
 }
 
+void inline disableWatchdog() {
+    WDTCSR &= ~_BV(WDCE);
+    WDTCSR &= ~_BV(WDIE); //disable interrupt
+}
+
 ISR(WATCHDOG_vect ) {
    // nothing, just wake up
 }
 
 void inline sleep() {
     set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+    //set_sleep_mode(SLEEP_MODE_IDLE);
     sleep_enable();
     MCUCR |= _BV(BODS) | _BV(BODSE);    //disable brownout detection during sleep
     MCUCR &=~ _BV(BODSE);
     sleep_cpu();
     sleep_disable();
+    wdt_disable();
 }
 
 void inline sleepWhileADC() {
@@ -227,14 +244,17 @@ uint16_t getLight() {
 #if 1
 void loopSensorMode() {
     static uint16_t currCapacitance = 0;
-    uint16_t light = 0;
+    static uint16_t light = 0;
     uint8_t newAddress = 0;
     uint16_t refCap = 0;
     uint8_t usiRx;
     uint8_t usiTx;
 
-    ledOn();
-    while(1) {
+    // disableWatchdog();
+    wdt_disable();
+    //ledOn();
+    
+    //    while(1) {
         if(usiTwiDataInReceiveBuffer()) {
 
             usiRx = usiTwiReceiveByte();
@@ -292,6 +312,15 @@ void loopSensorMode() {
                 flushTwiBuffers();
                 break;
 
+            case I2C_GOTO_SLEEP:
+                initWatchdog();
+                sleep();
+                break;
+
+            case I2C_ENABLE_SLEEP:
+                sleep_disabled=0;
+                break;
+
             default:
                 /* clean up the receive buffer */
                 /*
@@ -300,9 +329,9 @@ void loopSensorMode() {
                   }
                 */
                 break;
-            }
+            }// switch (usiRx)
         }
-    }
+//                  }
     ledOff();
 }
 #endif
@@ -331,6 +360,9 @@ uint32_t secondsAfterWatering = 0;
  * Sets wake up interval to 8s
  **/
 void inline wakeUpInterval8s() {
+
+    initWatchdog();
+
     WDTCSR &= ~_BV(WDP1);
     WDTCSR &= ~_BV(WDP2);
     WDTCSR |= _BV(WDP3) | _BV(WDP0); //every 8 sec
@@ -341,10 +373,13 @@ void inline wakeUpInterval8s() {
  * Sets wake up interval to 1s
  **/
 void inline wakeUpInterval1s() {
+
+    initWatchdog();
     WDTCSR &= ~_BV(WDP3);
     WDTCSR &= ~_BV(WDP0);
     WDTCSR |= _BV(WDP1) | _BV(WDP2); //every 1 sec
     sleepSeconds = 1;
+
 }
 
 void inline chirpIfLight() {
@@ -355,6 +390,8 @@ void inline chirpIfLight() {
 }
 
 //-----------------------------------------------------------------
+
+
 
 int main (void) {
 
@@ -395,12 +432,13 @@ int main (void) {
     uint16_t referenceCapacitance=0;
 
     /* ! this disables I2C */
-    USICR = 0;
+//    USICR = 0;
 
-    setupPowerSaving();
+//    setupPowerSaving();
 
-    initWatchdog();
-
+//    initWatchdog();
+    //usiTwiOnStart(ledOn);
+    
     uint8_t wakeUpCount = 0;
     uint8_t playedHappy = 0;
     
@@ -415,11 +453,30 @@ int main (void) {
 
     itoa(referenceCapacitance, ref_cap_str, 10);
 
+/*
     while(1) {
-        if(wakeUpCount < maxSleepTimes) {
-            sleep();
-            wakeUpCount++;
-        } else {
+    if(usiTwiDataInReceiveBuffer()){
+		loopSensorMode();
+    }
+    }
+*/
+
+    while(1) {
+    if(usiTwiDataInReceiveBuffer()){
+	sleep_disabled=1;
+	loopSensorMode();
+    }
+    if(sleep_disabled==0){
+        
+    if(wakeUpCount < maxSleepTimes) {
+        initWatchdog();
+        sleep();
+//            usiTwiSlaveInitAfterSleep(address);
+        wakeUpCount++;
+    }
+
+//#if 0
+    else {
         	secondsAfterWatering = maxSleepTimes * sleepSeconds;
 
             wakeUpCount = 0;
@@ -427,7 +484,7 @@ int main (void) {
             currCapacitance = getCapacitance();
             capacitanceDiff = referenceCapacitance - currCapacitance;
 
-            itoa(currCapacitance, cur_cap_str, 10);
+//            itoa(currCapacitance, cur_cap_str, 10);
             /*
             uart_puts("RefCap: ");
             uart_puts(ref_cap_str);
@@ -436,6 +493,7 @@ int main (void) {
             uart_puts("\r\n");
             */
             
+
             if (!playedHappy && ((int16_t)lastCapacitance - (int16_t)currCapacitance) < -5 && lastCapacitance !=0) {
                 chirp(9);
                 _delay_ms(350);
@@ -445,37 +503,52 @@ int main (void) {
                 playedHappy = 1;
             }
                         
+#if 0
+/*********/
+/* wenn diese Zeilen drin sind dann funktioniert i2c nicht mehr */            
             if(capacitanceDiff <= -5) {
                 if(STATE_HIBERNATE != state) {
                     wakeUpInterval8s();
                 }
                 maxSleepTimes = SLEEP_TIMES_HIBERNATE;
                 state = STATE_HIBERNATE;
-            } else {
+            }
+
+            else {
                 if(capacitanceDiff >= -5) {
+                    //chirp(3);
                     chirpIfLight();
                     playedHappy = 0;
                 }
+/*******/
+
                 if(capacitanceDiff > -5 && capacitanceDiff < -2) {
                     if(STATE_ALERT != state) {
                         wakeUpInterval8s();
                     }
                     maxSleepTimes = SLEEP_TIMES_ALERT;
                     state = STATE_ALERT;
-                } else if(capacitanceDiff >= -2 && capacitanceDiff < 0) {
+                }
+                else if(capacitanceDiff >= -2 && capacitanceDiff < 0) {
                     if(STATE_VERY_ALERT != state) {
                         wakeUpInterval8s();
                     }
                     state = STATE_VERY_ALERT;
                     maxSleepTimes = SLEEP_TIMES_VERY_ALERT;
-                } else if(capacitanceDiff >= 0) {
+                }
+                else if(capacitanceDiff >= 0) {
                     if(STATE_PANIC != state) {
                         wakeUpInterval1s();
                     }
                     state = STATE_PANIC;
                     maxSleepTimes = SLEEP_TIMES_PANIC;
                 }
+
             }
+#endif
         }
+//#endif
+    }
+
     }
 }

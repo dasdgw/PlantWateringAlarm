@@ -44,6 +44,8 @@ Change Activity:
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
+#include <avr/wdt.h>
+#include <avr/sleep.h>
 #include "usiTwiSlave.h"
 
 
@@ -363,6 +365,56 @@ usiTwiSlaveInit(
 
 } // end usiTwiSlaveInit
 
+// initialise USI for TWI slave mode
+
+void
+usiTwiSlaveInitAfterSleep(
+  uint8_t ownAddress
+)
+{
+
+//  flushTwiBuffers( );
+
+  slaveAddress = ownAddress;
+  inPacket = 0;
+
+  // In Two Wire mode (USIWM1, USIWM0 = 1X), the slave USI will pull SCL
+  // low when a start condition is detected or a counter overflow (only
+  // for USIWM1, USIWM0 = 11).  This inserts a wait state.  SCL is released
+  // by the ISRs (USI_START_vect and USI_OVERFLOW_vect).
+
+  // Set SCL and SDA as output
+  DDR_USI |= ( 1 << PORT_USI_SCL ) | ( 1 << PORT_USI_SDA );
+
+  // set SCL high
+  PORT_USI |= ( 1 << PORT_USI_SCL );
+
+  // set SDA high
+  PORT_USI |= ( 1 << PORT_USI_SDA );
+
+  // Set SDA as input
+  DDR_USI &= ~( 1 << PORT_USI_SDA );
+
+USISR = ( 1 << USI_START_COND_INT ) | ( 1 << USIOIF ) | ( 1 << USIPF ) | ( 1 << USIDC );
+
+USICR =
+       // enable Start Condition Interrupt
+       ( 1 << USISIE ) |
+       // disable Overflow Interrupt
+       ( 0 << USIOIE ) |
+       // set USI in Two-wire mode, no USI Counter overflow hold
+       ( 1 << USIWM1 ) | ( 0 << USIWM0 ) |
+       // Shift Register Clock Source = external, positive edge
+       // 4-Bit Counter Source = external, both edges
+       ( 1 << USICS1 ) | ( 0 << USICS0 ) | ( 0 << USICLK ) |
+       // no toggle clock-port pin
+       ( 0 << USITC );
+
+  // clear all interrupt flags and reset overflow counter
+
+
+
+} // end usiTwiSlaveInit
 
 
 // put data in the transmission buffer, wait if buffer is full
@@ -457,8 +509,18 @@ usiTwiOnStop(
 
 ISR( USI_START_VECTOR )
 {
-
-  // set default starting conditions for new TWI package
+    PRR &= ~_BV(PRUSI);
+    PRR &= ~_BV(PRTIM1);
+    PRR &= ~_BV(PRTIM0);
+    sleep_disable();
+    wdt_disable();
+#if 0
+    DDRB |= (1<<PB0)|(1<<PB1);
+    PORTB &= ~(1<<PB0);
+    PORTB |= (1<<PB1);
+#endif
+    
+// set default starting conditions for new TWI package
   overflowState = USI_SLAVE_CHECK_ADDRESS;
 
   // set SDA as input
@@ -539,7 +601,11 @@ Only disabled when waiting for a new Start Condition.
 ISR( USI_OVERFLOW_VECTOR )
 {
 
-  switch ( overflowState )
+    DDRB |= (1<<PB0)|(1<<PB1);
+    PORTB &= ~(1<<PB0);
+    PORTB |= (1<<PB1);
+
+    switch ( overflowState )
   {
 
     // Address mode: check address and send ACK (and next USI_SLAVE_SEND_DATA) if OK,

@@ -15,7 +15,8 @@
 #define I2C_CHIRP               0x0A
 #define I2C_FLUSH_I2C_BUFFERS   0x0B
 #define I2C_MEASURE_CAPACITANCE 0x0C
-
+#define I2C_GOTO_SLEEP          0x0D
+#define I2C_ENABLE_SLEEP        0x0E
 /* eeprom addresses */
 #define I2C_ADDRESS_EEPROM  0x01
 #define DRY_CAP_HIGH_EEPROM 0x02

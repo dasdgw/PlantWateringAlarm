@@ -257,11 +257,7 @@ static void loopSensorMode() {
     uint8_t usiTx;
     int16_t free_ram;
 
-    // disableWatchdog();
-    wdt_disable();
-    //ledOn();
-    
-    //    while(1) {
+       while(1) {
         if(usiTwiDataInReceiveBuffer()) {
 
             usiRx = usiTwiReceiveByte();
@@ -346,8 +342,7 @@ default:
                 break;
             }// switch (usiRx)
         }
-//                  }
-    ledOff();
+       }
 }
 #endif
 
@@ -375,9 +370,6 @@ uint32_t secondsAfterWatering = 0;
  * Sets wake up interval to 8s
  **/
 static inline void wakeUpInterval8s() {
-
-    initWatchdog();
-
     WDTCSR &= ~_BV(WDP1);
     WDTCSR &= ~_BV(WDP2);
     WDTCSR |= _BV(WDP3) | _BV(WDP0); //every 8 sec
@@ -388,8 +380,6 @@ static inline void wakeUpInterval8s() {
  * Sets wake up interval to 1s
  **/
 static inline void wakeUpInterval1s() {
-
-    initWatchdog();
     WDTCSR &= ~_BV(WDP3);
     WDTCSR &= ~_BV(WDP0);
     WDTCSR |= _BV(WDP1) | _BV(WDP2); //every 1 sec
@@ -447,12 +437,11 @@ int main (void) {
     uint16_t referenceCapacitance=0;
 
     /* ! this disables I2C */
-//    USICR = 0;
+    USICR = 0;
 
-//    setupPowerSaving();
+    setupPowerSaving();
 
-//    initWatchdog();
-    //usiTwiOnStart(ledOn);
+    initWatchdog();
     
     uint8_t wakeUpCount = 0;
     uint8_t playedHappy = 0;
@@ -466,48 +455,19 @@ int main (void) {
     referenceCapacitance = ( eeprom_read_byte((uint8_t*)DRY_CAP_HIGH_EEPROM) << 8 );
     referenceCapacitance |= eeprom_read_byte((uint8_t*)DRY_CAP_LOW_EEPROM);
 
-    itoa(referenceCapacitance, ref_cap_str, 10);
-
-/*
     while(1) {
-    if(usiTwiDataInReceiveBuffer()){
-		loopSensorMode();
-    }
-    }
-*/
+        if(wakeUpCount < maxSleepTimes) {
+            sleep();
+            wakeUpCount++;
+        }
 
-    while(1) {
-    if(usiTwiDataInReceiveBuffer()){
-	sleep_disabled=1;
-	loopSensorMode();
-    }
-    if(sleep_disabled==0){
-        
-    if(wakeUpCount < maxSleepTimes) {
-        initWatchdog();
-        sleep();
-//            usiTwiSlaveInitAfterSleep(address);
-        wakeUpCount++;
-    }
-
-//#if 0
-    else {
-        	secondsAfterWatering = maxSleepTimes * sleepSeconds;
+        else {
+            secondsAfterWatering = maxSleepTimes * sleepSeconds;
 
             wakeUpCount = 0;
             lastCapacitance = currCapacitance;
             currCapacitance = getCapacitance();
             capacitanceDiff = referenceCapacitance - currCapacitance;
-
-//            itoa(currCapacitance, cur_cap_str, 10);
-            /*
-            uart_puts("RefCap: ");
-            uart_puts(ref_cap_str);
-            uart_puts("   CurCap: ");
-            uart_puts(cur_cap_str);
-            uart_puts("\r\n");
-            */
-            
 
             if (!playedHappy && ((int16_t)lastCapacitance - (int16_t)currCapacitance) < -5 && lastCapacitance !=0) {
                 chirp(9);
@@ -517,10 +477,7 @@ int main (void) {
                 chirp(1);
                 playedHappy = 1;
             }
-                        
-#if 0
-/*********/
-/* wenn diese Zeilen drin sind dann funktioniert i2c nicht mehr */            
+
             if(capacitanceDiff <= -5) {
                 if(STATE_HIBERNATE != state) {
                     wakeUpInterval8s();
@@ -528,16 +485,11 @@ int main (void) {
                 maxSleepTimes = SLEEP_TIMES_HIBERNATE;
                 state = STATE_HIBERNATE;
             }
-
-//  #if 0
             else {
                 if(capacitanceDiff >= -5) {
-                    //chirp(3);
                     chirpIfLight();
                     playedHappy = 0;
                 }
-/*******/
-
                 if(capacitanceDiff > -5 && capacitanceDiff < -2) {
                     if(STATE_ALERT != state) {
                         wakeUpInterval8s();
@@ -559,12 +511,7 @@ int main (void) {
                     state = STATE_PANIC;
                     maxSleepTimes = SLEEP_TIMES_PANIC;
                 }
-
             }
-#endif
         }
-//#endif
-    }
-
     }
 }

@@ -1,6 +1,9 @@
 #ifndef __CONFIG_H__
 #define __CONFIG_H__
 
+/* firmware version */
+#define FIRMWARE_VERSION 0x31 //3.1
+
 /* i2c commands */
 #define I2C_GET_CAPACITANCE     0x00
 #define I2C_SET_ADDRESS         0x01

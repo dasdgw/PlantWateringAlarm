@@ -20,7 +20,8 @@
 #define LED_K PB0 
 #define LED_A PB1
 
-uint8_t sleep_disabled = 0;
+/* this will olny work if no ISR(WATCHDOG_vect ) is defined */
+#define reset() wdt_enable(WDTO_15MS); while(1) {}
 
 int freeRam ()
 {
@@ -333,7 +334,13 @@ static void loopSensorMode() {
                 usiTwiTransmitByte(free_ram & 0x00FF);
                 break;
 
-            default:
+            case I2C_RESET:
+                reset();
+                
+            case I2C_GET_VERSION:
+                usiTwiTransmitByte(FIRMWARE_VERSION);
+
+default:
                 /* clean up the receive buffer */
                 /*
                   while(usiTwiDataInReceiveBuffer()) {

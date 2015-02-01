@@ -130,7 +130,6 @@ static inline void sleep() {
     MCUCR &=~ _BV(BODSE);
     sleep_cpu();
     sleep_disable();
-    wdt_disable();
 }
 
 static inline void sleepWhileADC() {

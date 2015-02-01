@@ -324,10 +324,6 @@ static void loopSensorMode() {
                 sleep();
                 break;
 
-            case I2C_ENABLE_SLEEP:
-                sleep_disabled=0;
-                break;
-
             case I2C_GET_FREE_RAM:
                 free_ram=freeRam();
                 usiTwiTransmitByte(free_ram>>8);

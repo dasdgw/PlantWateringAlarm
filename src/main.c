@@ -22,6 +22,12 @@
 
 uint8_t sleep_disabled = 0;
 
+int freeRam ()
+{
+  extern int __heap_start, *__brkval;
+  int v;
+  return (int) &v - (__brkval == 0 ? (int) &__heap_start : (int) __brkval);
+}
 //------------ peripherals ----------------
 
 static inline void initBuzzer() {
@@ -249,6 +255,7 @@ static void loopSensorMode() {
     uint16_t refCap = 0;
     uint8_t usiRx;
     uint8_t usiTx;
+    int16_t free_ram;
 
     // disableWatchdog();
     wdt_disable();
@@ -319,6 +326,12 @@ static void loopSensorMode() {
 
             case I2C_ENABLE_SLEEP:
                 sleep_disabled=0;
+                break;
+
+            case I2C_GET_FREE_RAM:
+                free_ram=freeRam();
+                usiTwiTransmitByte(free_ram>>8);
+                usiTwiTransmitByte(free_ram & 0x00FF);
                 break;
 
             default:
@@ -514,6 +527,7 @@ int main (void) {
                 state = STATE_HIBERNATE;
             }
 
+//  #if 0
             else {
                 if(capacitanceDiff >= -5) {
                     //chirp(3);
